@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>crud.html</title>
+
+<meta http-equiv="keywords" content="keyword1,keyword2,keyword3">
+<meta http-equiv="description" content="this is my page">
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+
+<!--<link rel="stylesheet" type="text/css" href="./styles.css">-->
+<link rel="stylesheet" type="text/css" href="themes/default/easyui.css">
+<link rel="stylesheet" type="text/css" href="themes/icon.css">
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" src="jquery.easyui.min.js"></script>
+<style type="text/css">
+body {
+	font-size: 14px;
+}
+</style>
+
+
+<script type="text/javascript">
+	/* 	formatter:rep  :可以对单列数据做判断   例如：sex:0,1(0男1女) 可以用formatter
+	
+	function rep(value,row,index){
+		if(value==0){
+			return "男";
+		}else{
+			return "女";
+		}	
+	} 
+	
+	pagination:true:分页组件
+	rownumbers:true:添加编号		
+	ctrlSelect:true：设置可以选中多行
+	
+	//easyui方法的调用规则：
+	控件对象.控件名("方法名","参数")
+	 */
+
+	/*  根据菜品名查询菜品	  */
+	function submitQuery() {
+
+		var fname = $("#tb").textbox("getValue");
+
+		$("#dg").datagrid("load", {
+			foodName : fname
+		});
+	};
+
+	/* 修改菜品信息 */
+	function submitUpdate() {
+		var food = $("#dg").datagrid("getSelected");
+		$("#ff").form("submit",{
+			url: "food/"+food.foodid,
+			success : function(msg) {	
+				msg=JSON.parse(msg);				
+				if (msg.code == 0) {
+					$.messager.alert("提示","修改成功");
+					$("#w").window("close");
+					submitQuery();    
+				}else{
+					var message=msg.message;
+					$.messager.alert("提示",message); 							
+				}
+			}		
+		})
+	};		
+	
+	/* 添加菜品 */
+	function submitSave() {
+		$("#f").form("submit",{
+			url: "food",
+			success : function(msg) {	
+				msg=JSON.parse(msg);				
+				if (msg.code == 0) {
+					$.messager.alert("提示","修改成功");
+					$("#ww").window("close");
+					submitQuery();    
+				}else{
+					var message=msg.message;
+					$.messager.alert("提示",message); 							
+				}
+			}		
+		})
+	};	
+	
+	
+	/* 重置表单信息 */
+	function clearForm(){
+		$("#ff").form("clear");
+	};
+	
+
+	$(function() {
+		$("#dg").datagrid({
+			toolbar : [ {
+				iconCls : "icon-insert",
+				text : "增加",
+				onClick : function() {			
+					$("#ww").window("open");
+				}
+				
+			}, {
+				iconCls : "icon-edit",
+				text : "修改",
+				onClick : function() {
+					var food = $("#dg").datagrid("getSelected");
+
+					if (food == null) {
+						$.messager.alert("请选择一行数据");
+						return;
+					}
+
+					$("#w").window("open");
+					$("#ff").form("load",food);					
+				}
+				
+			}, {
+				iconCls : "icon-remove",
+				text : "删除",
+				onClick : function() {
+					//获取单行
+					var food = $("#dg").datagrid("getSelected");
+
+					if (food == null) {
+						$.messager.alert("请选择一行或多行数据");
+						return;
+					}
+					
+					//获取多行
+					var foods = $("#dg").datagrid("getSelections");
+
+
+					var foodid="";
+					for(var i=0;i<foods.length;i++){
+						foodid+=foods[i].foodid+",";
+					};
+					
+					var foodid=foodid.substring(0,foodid.length-1);
+					
+					$.ajax({
+						type : "POST",
+						url : "food/" + foodid,
+						data : "_method=delete",
+						dataType : "json",
+						success : function(msg) {
+							if (msg.code == 0) {
+								$.messager.alert("提示","删除成功");
+								submitQuery();    
+							}else{
+								var message=msg.message;
+								$.messager.alert("提示",message); 							
+							}
+						}
+					});
+				}
+			}]
+		})
+	});
+	
+	//重新定义日期格式
+	$.fn.datebox.defaults.formatter = function(date){
+		var y = date.getFullYear();
+		var m = date.getMonth()+1;
+		var d = date.getDate();
+		return y+'-'+m+'-'+d;
+	};
+	//自定义验证规则
+	$.extend($.fn.validatebox.defaults.rules, {    
+	    isNum: {    
+	        validator: function(value, param){    
+	            if(isNaN(value)){
+	            	return false;
+	            }    
+	            return true;
+	        },    
+	        message: '电话号码必须是11位的数字'  
+	    },priceRange:{
+	    	validator: function(value, param){    
+	            if(isNaN(value) || value<=0 || value>=100){
+	            	return false;
+	            }    
+	            return true;
+	        },    
+	        message: '菜品定价1-100元'
+	    },emailTest:{
+	    	validator: function(value, param){ 
+	    		var regex= /^(\w-*\.*)+@(\w-?)+(\.\w{2,})+$/  
+	            if(!regex.test(value)){
+	            	return false;
+	            }    
+	            return true;
+	        }, 
+	        message: '邮箱格式不正确'
+	    }
+	        
+	});  
+	
+</script>
+</head>
+
+<body>
+	菜品名:
+	<input class="easyui-textbox" type="text" name="name" id="tb" />
+
+	<a href="javascript:void(0)" class="easyui-linkbutton"
+		onclick="submitQuery()">查&nbsp;&nbsp;询</a>
+
+	<div style="margin-top: 5px"></div>
+
+	<table id="dg" class="easyui-datagrid" title="菜品"
+		style="width:700px;height:250px"
+		data-options="ctrlSelect:true,collapsible:true,url:'queryAFoodList',method:'get',pagination:true,rownumbers:true">
+		<thead>
+			<tr>
+				<th data-options="field:'foodid',width:80">菜品编号</th>
+				<th data-options="field:'foodname',width:100">菜品名</th>
+				<th data-options="field:'price',width:80,align:'right'">价格</th>
+			</tr>
+		</thead>
+	</table>
+
+
+	<div id="w" class="easyui-window" title="修改菜品信息"
+		data-options="iconCls:'icon-edit',closed:true"
+		style="width:330px;height:200px;padding:5px;">
+		<form id="ff" method="post">
+			<input type="hidden" name="_method" value="put" />
+			<table cellpadding="5">
+				<tr>
+					<td>菜品编号:</td>
+					<td><input class="easyui-textbox" type="text" name="foodid"
+						data-options="required:false"></input></td>
+				</tr>
+				<tr>
+					<td>菜品名:</td>
+					<td><input class="easyui-textbox" type="text" name="foodname"
+						data-options="required:false"></input></td>
+				</tr>
+				<tr>
+					<td>价格:</td>
+					<td><input class="easyui-textbox" type="text" name="price"
+						data-options="required:false"></input></td>
+				</tr>
+			</table>
+		</form>
+		<div style="text-align:center;padding:5px">
+			<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitUpdate()">保存</a> 
+			<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+		</div>
+		
+	</div>
+		<div id="ww" class="easyui-window" title="添加菜品"
+		data-options="iconCls:'icon-edit',closed:true"
+		style="width:330px;height:300px;padding:5px;">
+		<form id="f" method="post"  enctype="multipart/form-data">
+			<table cellpadding="5">
+				<tr>
+					<td>菜品名:</td>
+					<td><input class="easyui-textbox" type="text" name="foodname"
+						data-options="required:true,missingMessage:'菜品名不能为空',validType:'length[0,5]',invalidMessage:'输入的长度过长'"></input></td>
+				</tr>
+				<tr>
+					<td>价格:</td>
+					<td><input class="easyui-textbox" type="text" name="price"
+						data-options="required:true,missingMessage:'菜品价格不能为空',validType:'priceRange'"></input></td>
+				</tr>
+				<tr>
+					<td>菜品图:</td>
+					<td><input class="easyui-filebox" name="multifile" data-options="prompt:'请选择上传的图片'" /> </td>
+				</tr>
+				<tr>
+					<td>菜品创作时间:</td>
+					<td><input class="easyui-datebox" type="text" name="foodDate"
+						data-options="editable:false"></input></td>
+				</tr>
+				<tr>
+					<td>联系方式:</td>
+					<td><input class="easyui-textbox" type="text" name="phone"
+						data-options="required:true,missingMessage:'联系电话不能为空',validType:['isNum','length[11,11]']"></input></td>
+				</tr>
+				<tr>
+	    			<td>邮箱:</td>
+	    			<td><input class="easyui-textbox" type="text" name="email" data-options="required:true,missingMessage:'邮箱地址不能为空',validType:'emailTest'"></input></td>
+	    		</tr>
+			</table>
+		</form>
+		<div style="text-align:center;padding:5px">
+			<a href="javascript:void(0)" class="easyui-linkbutton" onclick="submitSave()">添加</a> 
+			<a href="javascript:void(0)" class="easyui-linkbutton" onclick="clearForm()">重置</a>
+		</div>
+	</div>
+</body>
+</html>

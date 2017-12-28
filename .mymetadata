@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-module
+  type="WEB"
+  name="ShiroLesson"
+  id="myeclipse.1513771393982"
+  context-root="/ShiroLesson"
+  j2ee-spec="5.0"
+  archive="ShiroLesson.war">
+  <attributes>
+    <attribute name="webrootdir" value="src/main/webapp" />
+  </attributes>
+</project-module>
+
